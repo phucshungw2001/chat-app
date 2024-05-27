@@ -14,6 +14,7 @@ import { useContext } from "react";
 import { AuthContext } from "../Context/auth";
 import { UserAddOutlined, MoreOutlined } from "@ant-design/icons";
 import { deleteDocument } from "../../FireBase/service";
+import { useState } from "react";
 
 const WrapperStyle = styled.div`
   margin-bottom: 10px;
@@ -61,7 +62,7 @@ const WrapperStyle = styled.div`
   }
 `;
 
-// Hàm để định dạng ngày giờ
+// Format Date
 function formatDate(createdAt) {
   let formattedDate = "";
   if (createdAt) {
@@ -77,8 +78,14 @@ function Message({ displayName, text, createdAt, photoURL, id, messId }) {
   } = useContext(AuthContext);
   const isOwnMessage = id === uid;
 
+  //Modal handle
+  const [isOpen, setIsOpen] = useState(false)
   const { confirm, error, success } = Modal;
   const [modal, contextHolder] = Modal.useModal();
+  const showModal = () => {
+    setIsOpen(true);
+  };
+
   const handleDeleteDoc = () => {
     deleteDocument("messages", messId)
       .then(() => {
@@ -94,11 +101,15 @@ function Message({ displayName, text, createdAt, photoURL, id, messId }) {
       });
   };
 
+  const handleCancelDelete  = () => {
+    setIsOpen(false);
+  };
+
   const items = [
     {
       label: (
         <Button
-          onClick={handleDeleteDoc}
+          onClick={showModal}
           type="text"
           danger
           style={{ border: "none" }}
@@ -148,6 +159,13 @@ function Message({ displayName, text, createdAt, photoURL, id, messId }) {
       <div className="content">
         <Typography.Text>{text}</Typography.Text>
       </div>
+      <Modal
+        title="Bạn có muốn xóa tin nhắn không"
+        open={isOpen}
+        onOk={handleDeleteDoc}
+        onCancel={handleCancelDelete}
+      >
+      </Modal>
     </WrapperStyle>
   );
 }
