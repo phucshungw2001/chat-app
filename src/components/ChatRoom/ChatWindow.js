@@ -1,11 +1,18 @@
-import { Alert, Avatar, Button, Form, Input, Tooltip } from "antd";
+import { Alert, Avatar, Button, Flex, Form, Input, Tooltip } from "antd";
 import styled from "styled-components";
-import { UserAddOutlined, MoreOutlined } from "@ant-design/icons";
+import {
+  UserAddOutlined,
+  SmileOutlined,
+  CaretDownOutlined,
+  SendOutlined
+} from "@ant-design/icons";
 import Message from "./Message";
 import { AppContext } from "../Context/appProvider";
 import { useContext, useEffect, useRef, useState } from "react";
 import { addDocument } from "../../FireBase/service";
 import { AuthContext } from "../Context/auth";
+import data from "@emoji-mart/data";
+import Picker from "@emoji-mart/react";
 
 const WrapperStyle = styled.div`
   height: 100%;
@@ -24,8 +31,11 @@ const HeaderStyle = styled.div`
   .header {
     &-info {
       display: flex;
-      flex-direction: column;
       justify-content: center;
+    }
+
+    &-downoutline {
+      cursor: pointer;
     }
 
     &-title {
@@ -100,20 +110,32 @@ function ChatWindow() {
     user: { uid, photoURL, displayName },
   } = useContext(AuthContext);
   const [inputValue, setInputValue] = useState("");
+  const [isEmojiPickerVisible, setIsEmojiPickerVisible] = useState(false);
   const [form] = Form.useForm();
 
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
   };
 
+  const handleEmojiSelect = (emoji) => {
+    const currentMessage = form.getFieldValue("message") || "";
+    form.setFieldsValue({ message: currentMessage + emoji.native });
+    setInputValue((prevInput) => prevInput + emoji.native);
+    setIsEmojiPickerVisible(false);
+  };
+
   const handleOnSubmit = () => {
-    addDocument("messages", {
-      text: inputValue,
-      uid,
-      photoURL,
-      roomId: selectRoom.id,
-      displayName,
-    });
+    if (inputValue) {
+      addDocument("messages", {
+        text: inputValue,
+        uid,
+        photoURL,
+        roomId: selectRoom.id,
+        displayName,
+      });
+    }
+
+    setInputValue("");
 
     form.resetFields(["message"]);
   };
@@ -132,10 +154,15 @@ function ChatWindow() {
         <>
           <HeaderStyle>
             <div className="header-info">
-              <p className="header-title">{selectRoom.name}</p>
-              <span className="header-description">
-                {selectRoom.descriptions}
-              </span>
+              <div>
+                <p className="header-title">{selectRoom.name}</p>
+                <span className="header-description">
+                  {selectRoom.descriptions}
+                </span>
+              </div>
+              <div className="header-downoutline">
+                <CaretDownOutlined />
+              </div>
             </div>
             <ButtonGroupStyled>
               <Button
@@ -162,9 +189,8 @@ function ChatWindow() {
           <ContentStyle>
             <MessageListStyled ref={messageListRef}>
               {messages.map((mess) => (
-                <div>
+                <div key={mess.id}>
                   <MessageStyled
-                    key={mess.id}
                     style={
                       mess.uid === uid
                         ? { justifyContent: "end" }
@@ -183,24 +209,44 @@ function ChatWindow() {
                 </div>
               ))}
             </MessageListStyled>
-            <FormStyle form={form}>
-              <Form.Item name="message">
-                <TextArea
-                  onChange={handleInputChange}
-                  placeholder="Nhập tin nhắn. "
-                  autoComplete="off"
-                  onPressEnter={handleOnSubmit}
-                  autoSize={{ minRows: 1, maxRows: 2 }}
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <FormStyle style={{ width: "100%" }} form={form}>
+                <Button
+                  style={{ margin: "2px", border: "none" }}
+                  icon={<SmileOutlined />}
+                  onClick={() => setIsEmojiPickerVisible(!isEmojiPickerVisible)}
                 />
-              </Form.Item>
-              <Button
-                style={{ marginLeft: "5px" }}
-                onClick={handleOnSubmit}
-                type="primary"
+                <Form.Item name="message">
+                  <TextArea
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    placeholder="Nhập tin nhắn. "
+                    autoComplete="off"
+                    onPressEnter={handleOnSubmit}
+                    autoSize={{ minRows: 1, maxRows: 2 }}
+                    style={{borderRadius : "55px"}}
+                  />
+                </Form.Item>
+                <Button
+                  style={{ marginLeft: "5px" }}
+                  onClick={handleOnSubmit}
+                  type="primary"
+                >
+                  <SendOutlined />
+                </Button>
+              </FormStyle>
+            </div>
+            {isEmojiPickerVisible && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "90px",
+                  right: "20px",
+                }}
               >
-                Gửi
-              </Button>
-            </FormStyle>
+                <Picker onEmojiSelect={handleEmojiSelect} />
+              </div>
+            )}
           </ContentStyle>
         </>
       ) : (
@@ -210,7 +256,7 @@ function ChatWindow() {
           showIcon
           style={{ margin: 5 }}
           closeIcon
-        ></Alert>
+        />
       )}
     </WrapperStyle>
   );

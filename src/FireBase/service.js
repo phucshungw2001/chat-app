@@ -8,6 +8,7 @@ import {
   serverTimestamp,
   doc,
   deleteDoc,
+  updateDoc 
 } from "firebase/firestore";
 
 export const addDocument = async (collectionName, data) => {
@@ -25,11 +26,25 @@ export const addDocument = async (collectionName, data) => {
 export const deleteDocument = async (collectionName, documentId) => {
   try {
     const documentRef = doc(db, collectionName, documentId);
-    
+
     await deleteDoc(documentRef);
     console.log("Document successfully deleted!");
   } catch (error) {
     console.error("Error deleting document: ", error);
+  }
+};
+
+export const updateDocument = async (collectionName, documentId, data) => {
+  try {
+    const documentRef = doc(db, collectionName, documentId);
+
+    await updateDoc(documentRef, {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
+    console.log("Document successfully updated!");
+  } catch (error) {
+    console.error("Error updating document: ", error);
   }
 };
 
