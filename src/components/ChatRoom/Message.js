@@ -42,7 +42,7 @@ const WrapperStyle = styled.div`
   }
 
   .content {
-    padding: 10px;
+    padding: 5px;
     border-radius: 5px;
     background-color: ${({ isownmessage }) =>
       isownmessage === "true" ? "#e6f7ff" : "#f5f5f5"};
