@@ -4,7 +4,8 @@ import {
   UserAddOutlined,
   SmileOutlined,
   CaretDownOutlined,
-  SendOutlined
+  SendOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
 import Message from "./Message";
 import { AppContext } from "../Context/appProvider";
@@ -13,6 +14,7 @@ import { addDocument } from "../../FireBase/service";
 import { AuthContext } from "../Context/auth";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
+import UploadImage from "../Modals/UploadImage";
 
 const WrapperStyle = styled.div`
   height: 100%;
@@ -73,6 +75,10 @@ const FormStyle = styled(Form)`
     flex: 1;
     margin-bottom: 0px;
   }
+
+  .textAreas:focus {
+    box-shadow: none;
+  }
 `;
 
 const MessageListStyled = styled.div`
@@ -103,6 +109,28 @@ const MessageStyled = styled.div`
 const { TextArea } = Input;
 
 function ChatWindow() {
+  // Upload Images
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [downloadURLs, setDownloadURLs] = useState([]);
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedFiles(files);
+  };
+
+  const handleUpload = () => {
+    UploadImage(
+      selectedFiles,
+      (progress) => setUploadProgress(progress),
+      (error) => console.error("Upload failed:", error),
+      (urls) => {
+        setDownloadURLs(urls);
+      }
+    );
+  };
+
+  // Send messengers
   const { selectRoom, members, messages, isInviteMember, setIsInviteMember } =
     useContext(AppContext);
 
@@ -125,10 +153,13 @@ function ChatWindow() {
   };
 
   const handleOnSubmit = () => {
-    if (inputValue) {
+    handleUpload();
+    if (inputValue || downloadURLs.length > 0) {
+      const images = downloadURLs.length > 0 ? downloadURLs : null;
       addDocument("messages", {
         text: inputValue,
         uid,
+        images,
         photoURL,
         roomId: selectRoom.id,
         displayName,
@@ -136,7 +167,7 @@ function ChatWindow() {
     }
 
     setInputValue("");
-
+    setDownloadURLs([]); // Reset danh sách URL ảnh sau khi gửi tin nhắn
     form.resetFields(["message"]);
   };
 
@@ -217,15 +248,58 @@ function ChatWindow() {
                   onClick={() => setIsEmojiPickerVisible(!isEmojiPickerVisible)}
                 />
                 <Form.Item name="message">
-                  <TextArea
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    placeholder="Nhập tin nhắn. "
-                    autoComplete="off"
-                    onPressEnter={handleOnSubmit}
-                    autoSize={{ minRows: 1, maxRows: 2 }}
-                    style={{borderRadius : "55px"}}
-                  />
+                  <div
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      border: "1px solid rgb(184 184 184 / 63%)",
+                      borderRadius: "50px",
+                      alignItems: "center",
+                    }}
+                  >
+                    <TextArea
+                      className="textAreas"
+                      value={inputValue}
+                      onChange={handleInputChange}
+                      placeholder="Nhập tin nhắn. "
+                      autoComplete="off"
+                      onPressEnter={handleOnSubmit}
+                      autoSize={{ minRows: 1, maxRows: 2 }}
+                      style={{
+                        border: "transparent",
+                        width: "100%",
+                        flex: "1",
+                        outline: "none",
+                        backgroundColor: "transparent",
+                      }}
+                    />
+                    <div style={{ margin: "0 5px" }}>
+                      <div>
+                        <input
+                          type="file"
+                          multiple
+                          onChange={handleFileChange}
+                        />
+                        <button onClick={handleUpload}>Upload</button>
+                        {uploadProgress > 0 && (
+                          <p>Upload Progress: {uploadProgress}%</p>
+                        )}
+                        {downloadURLs.map((url, index) => (
+                          <p
+                            key={index}
+                            style={{
+                              position: "absolute",
+                              bottom: "90px",
+                              right: "20px",
+                            }}
+                          >
+                            Download URL: <a href={url}>{url}</a>
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </Form.Item>
                 <Button
                   style={{ marginLeft: "5px" }}

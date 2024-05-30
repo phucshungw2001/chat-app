@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, FacebookAuthProvider, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCY4x6qU2jemX4Bh8rJzn417DiM2RxHL3E",
@@ -18,6 +19,7 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth();
 const db = getFirestore();
+const storage = getStorage(app);
 
 
 // if (window.location.hostname === "localhost") {
@@ -26,5 +28,5 @@ const db = getFirestore();
 // }
 
 
-export { auth, db }; // Exporting auth and db directly
+export { auth, db, storage }; // Exporting auth and db directly
 export default app; // Exporting app as default
